@@ -31,6 +31,15 @@ def train():
     model_folder = os.path.join(parent_dir, 'OUTPUT')
     os.makedirs(model_folder, exist_ok=True) if not os.path.exists(model_folder) else None
     model_name = f'EXPERIMENTAL3DCNN-{epochs}-{learning_rate}-{data_BS}'
-    trainer_factory = TrainerFactory(args, configfile, configfile_head, tb_logger, logger, model_name, model_folder, parent_dir)
+    trainer_factory = TrainerFactory(args, configfile, configfile_head, tb_logger, logger, model_name, model_folder,
+                                     parent_dir)
     start_time = time.time()
+    trainer_factory.get_train_trainer()
+    end_time = time.time()
+    total_time = end_time - start_time
+    hours, minutes, seconds = total_time // 3600, (total_time % 3600) // 60, total_time % 60
+    logger.info(f'Total Run time for Training is {int(hours)} hours, {int(minutes)}, and {seconds:.2f} seconds')
 
+
+if __name__ == '__main__':
+    train()

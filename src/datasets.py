@@ -21,8 +21,8 @@ class UFC101Dataset(Dataset):
         self.transform = transform
         self.num_frames = num_frames
         self.classes_use = classes_to_use
-        self.file_ind = os.path.join(os.path.dirname(video_dir), 'ucfTrainTestlist/classInd.txt')
-        self.train_list = os.path.join(os.path.dirname(video_dir), 'ucfTrainTestlist/trainlist01.txt')
+        self.file_ind = os.path.join(os.path.dirname(self.video_dir), 'ucfTrainTestlist/classInd.txt')
+        self.train_list = os.path.join(os.path.dirname(self.video_dir), 'ucfTrainTestlist/trainlist01.txt')
         self.num_samples_use = num_samples_use
         self.class_indixes = self.load_class_indices(self.file_ind)
         self.video_paths, self.labels = self.load_video_list(self.train_list, mode)
@@ -36,6 +36,7 @@ class UFC101Dataset(Dataset):
         return class_indices
 
     def load_video_list(self, trainlist, mode):
+        label_mapping = {1: 0, 3: 1, 5: 2, 7: 3, 9: 4, 11: 5, 13: 6, 15: 7, 17: 8, 19: 9}
         video_paths = []
         labels = []
         class_sample_count = {c: 0 for c in self.classes_use}
@@ -49,7 +50,10 @@ class UFC101Dataset(Dataset):
                         # Correct the path by not adding the redundant folder name
                         corrected_video_path = os.path.join(self.video_dir, video_path.split('/')[1])
                         video_paths.append(corrected_video_path)
-                        labels.append(class_index)
+
+                        # remap the label
+                        remapped_label = label_mapping[class_index]
+                        labels.append(remapped_label)
                         class_sample_count[class_index] += 1
         return video_paths, labels
 
@@ -58,7 +62,7 @@ class UFC101Dataset(Dataset):
 
     def __getitem__(self, idx):
         video_path = self.video_paths[idx]
-        label = self.labels[idx] - 1
+        label = self.labels[idx]
         frames = self.load_frames_video(video_path, self.num_frames)
         if self.transform:
             frames = [self.transform(Image.fromarray(frame)) for frame in frames]
@@ -94,24 +98,24 @@ class UFC101Dataset(Dataset):
         return frames
 
 
-# if __name__ == '__main__':
-#     video_dir = '/home/iamshri/Documents/Dataset/UCF/Videos'
-#     # file_ind_path = '/home/iamshri/Documents/Dataset/UCF/ucfTrainTestlist/classInd.txt'
-#     # train_list_path = '/home/iamshri/Documents/Dataset/UCF/ucfTrainTestlist/trainlist01.txt'
-#     classes_to_use = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
-#     num_samples_use = 5
-#     transform = transforms.Compose([
-#         transforms.Resize((128, 128)),
-#         transforms.ToTensor()
-#     ])
-#     ucf_dataset = UFC101Dataset(video_dir, transform=transform,
-#                                 num_frames=16, classes_to_use=classes_to_use, mode='train')
-#     batch_size = 4
-#     ucf_dataloader = DataLoader(ucf_dataset, batch_size=batch_size, shuffle=True)
-#     for i, batch in enumerate(ucf_dataloader):
-#         frames = batch['frames']
-#         labels = batch['label']
-#
-#         print(f'Batch {i}:')
-#         print(f'Frames Shape: {frames.shape}')
-#         print(f'Labels:{labels}')
+if __name__ == '__main__':
+    dataset_directory = '/home/iamshri/Documents/Dataset/UCF/Videos'
+    # file_ind_path = '/home/iamshri/Documents/Dataset/UCF/ucfTrainTestlist/classInd.txt'
+    # train_list_path = '/home/iamshri/Documents/Dataset/UCF/ucfTrainTestlist/trainlist01.txt'
+    classes_to_use = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
+    num_samples_use = 5
+    transform = transforms.Compose([
+        transforms.Resize((128, 128)),
+        transforms.ToTensor()
+    ])
+    ucf_dataset = UFC101Dataset(dataset_directory, transform=transform,
+                                num_frames=16, classes_to_use=classes_to_use, mode='train')
+    batch_size = 4
+    ucf_dataloader = DataLoader(ucf_dataset, batch_size=batch_size, shuffle=True)
+    for i, batch in enumerate(ucf_dataloader):
+        frames = batch['frames']
+        labels = batch['label']
+
+        print(f'Batch {i}:')
+        print(f'Frames Shape: {frames.shape}')
+        print(f'Labels:{labels}')

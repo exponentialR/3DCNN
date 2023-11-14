@@ -1,6 +1,6 @@
 import os
 import pytorch_lightning as pl
-from models import Example3DCNN
+from pl_model import experimental3DCNN
 from datasets import UFC101Dataset
 from test_factory import Tester
 from torchvision import transforms
@@ -25,17 +25,19 @@ class TrainerFactory:
     def _fit(self, train_loader, valid_loader=None, ckpt_path=None):
         self._log_hyperparameters()
         model_out_path = os.path.join(self.model_folder, f'{self.model_name}.ckpt')
-        learner = Example3DCNN()
+        learner = experimental3DCNN(self.configfile_head['lr'])
         trainer = pl.Trainer(
             accelerator='gpu',
             devices=self.num_gpus,
             num_nodes=1,
             logger=self.tb_logger,
             sync_batchnorm=True,
-            deterministic=True,
+            # deterministic=True,
+
+            max_epochs=int(self.configfile_head['epoch'])
         )
 
-        fit_args = [learner, train_loader, valid_loader] if self.args.use_valid.lower() == 'yes' else [learner,
+        fit_args = [learner, train_loader, valid_loader] if self.configfile_head['use_valid'].lower() == 'yes' else [learner,
                                                                                                        train_loader]
         if ckpt_path:
             trainer.fit(*fit_args, ckpt_path=ckpt_path)
@@ -49,7 +51,7 @@ class TrainerFactory:
         self.configfile.set('outputs', 'resume_ckpt', str(model_out_path))
         self.configfile.set(f'outputs', 'output_model', str(model_out_path))
 
-        with open(self.configfile, 'w') as f:
+        with open('config.ini', 'w') as f:
             self.configfile.write(f)
 
         self.logger.info(f'Full Checkpoint have been saved into {model_out_path}')
@@ -68,7 +70,7 @@ class TrainerFactory:
         ])
 
         ucf_dataset = UFC101Dataset(self.configfile_head['data_dir'], transform=transform,
-                                    num_frames=16, classes_to_use=eval(self.configfile_head['classes_to_use']),
+                                    num_frames=64, classes_to_use=eval(self.configfile_head['classes_to_use']),
                                     num_samples_use=int(self.configfile_head['num_samples_to_use']), mode='train')
         total_samples = len(ucf_dataset)
         split = int(0.8 * total_samples)
@@ -88,12 +90,12 @@ class TrainerFactory:
 
         # Create DataLoader for train and validation using the samplers
         batch_size = int(self.configfile_head['batch_size'])  # Use the batch size from your config
-        train_loader = DataLoader(ucf_dataset, batch_size=batch_size, sampler=train_sampler)
-        val_loader = DataLoader(ucf_dataset, batch_size=batch_size, sampler=val_sampler)
+        train_loader = DataLoader(ucf_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=int(self.configfile_head['num_workers']))
+        val_loader = DataLoader(ucf_dataset, batch_size=batch_size, sampler=val_sampler, num_workers=int(self.configfile_head['num_workers']))
         if self.args.mode.lower() == 'train':
             ckpt_path = None
         elif self.args.mode.lower() == 'resume':
-            ckpt_path = self.configfile_head['resume_ckpt']
+            ckpt_path = self.configfile['outputs']['resume_ckpt']
 
         elif self.args.mode.lower() == 'test':
             tester = Tester(self.args, self.configfile_head)
