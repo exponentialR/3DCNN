@@ -108,7 +108,7 @@ We use the **[UCF101 Action Recognition Dataset](https://www.crcv.ucf.edu/data/U
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/username/3DCNN.git
+   git clone https://github.com/exponentialR/3DCNN.git
    cd 3DCNN
    ```
 
