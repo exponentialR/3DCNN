@@ -209,4 +209,4 @@ Happy coding and best of luck with your 3D Action Recognition tasks!
 
 ---
 
-*© 2025 Your Name. This project is provided as-is without warranty of any kind.*
+*© 2025 Samuel Adebayo. This project is provided as-is without warranty of any kind.*
